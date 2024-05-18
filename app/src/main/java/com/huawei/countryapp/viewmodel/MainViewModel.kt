@@ -1,35 +1,43 @@
 package com.huawei.countryapp.viewmodel
 
 import android.os.CountDownTimer
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.huawei.countryapp.model.Country
+import com.huawei.countryapp.model.Product
+import com.huawei.countryapp.service.ProductAPIservice
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class MainViewModel : ViewModel() {
 
-    val countryData = MutableLiveData<Country>()
-    val countryLoad = MutableLiveData<Boolean>()
-    val countryError = MutableLiveData<Boolean>()
+    private val productAPI = ProductAPIservice()
 
-    init {
-        val timer = object : CountDownTimer (5000, 1000){
-            override fun onTick(millisUntilFinished: Long) {
-                if (millisUntilFinished.toInt() == 4000){
-                    val a = 5000
-                }
+    val productData = MutableLiveData<List<Product>>()
+    val productLoad = MutableLiveData<Boolean>()
+    val productError = MutableLiveData<Boolean>()
+
+    fun getDataFromAPI(){
+        productLoad.value = true
+        productAPI.getData().enqueue(object : Callback<List<Product>>{
+            override fun onResponse(call: Call<List<Product>>, response: Response<List<Product>>) {
+                productData.value = response.body()
+                productLoad.value = false
+                productError.value = false
             }
-            override fun onFinish() {
-                countryLoad.value = false
-                val country = Country("Türkiye","turkeyImageUrl")
-                countryData.value = country
+
+            override fun onFailure(call: Call<List<Product>>, t: Throwable) {
+                productLoad.value = false
+                productError.value = true
+                Log.e("retrofit error",t.message.toString())
             }
-        }
-        getDataFromService(timer)
+
+        })
+
+
     }
 
-    private fun getDataFromService(timer: CountDownTimer){
-        countryLoad.value = true
-        timer.start()
-    }
+
 
 }
